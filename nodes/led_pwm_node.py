@@ -11,9 +11,9 @@ from led_pwm_control_ros.srv import LedPwmResponse
 
 class LedPwmNode(object):
 
-    AllowedPins = [3,5,6,9,10,11]
-    MinValue = 0
-    MaxValue = 255
+    AllowedPins = LEDController.AllowedPins 
+    MinValue = LEDController.MinPwmValue  
+    MaxValue = LEDController.MaxPwmValue 
 
     def __init__(self):
 
