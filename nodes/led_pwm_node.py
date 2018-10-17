@@ -3,8 +3,10 @@ from __future__ import print_function
 import threading
 import roslib
 import rospy
-from led_pwm_control import LEDController 
+import std_msgs.msg
 
+from led_pwm_control import LEDController 
+from led_pwm_control_ros.msg import LedPwmInfo
 from led_pwm_control_ros.srv import LedPwm
 from led_pwm_control_ros.srv import LedPwmResponse
 
@@ -22,16 +24,26 @@ class LedPwmNode(object):
 
         rospy.init_node('led_pwm')
         self.led_pwm_srv = rospy.Service('led_pwm', LedPwm, self.led_pwm_srv_callback)
+        self.led_pwm_info_pub = rospy.Publisher('led_pwm_info', LedPwmInfo, queue_size=10) 
 
     def led_pwm_srv_callback(self, req):
+        ok = True
+        message = ''
         if not req.pin in self.AllowedPins:
-            return LedPwmResponse(False,'invalid pin number {}'.format(req.pin))
-        if req.value < self.MinValue:
-            return LedPwmResponse(False,'pwm value, {} < min allowed {}'.format(req.value,self.MinValue))
-        if req.value > self.MaxValue:
-            return LedPwmResponse(False,'pwm value, {} > max allowed {}'.format(req.value,self.MaxValue))
+            ok = False
+            message = 'invalid pin number {}'.format(req.pin)
+        if ok and req.value < self.MinValue:
+            ok = False
+            message = 'pwm value, {} < min allowed {}'.format(req.value,self.MinValue)
+        if ok and req.value > self.MaxValue:
+            ok = False
+            message = 'pwm value, {} > max allowed {}'.format(req.value,self.MaxValue)
+
+        header = std_msgs.msg.Header()
+        header.stamp = rospy.Time.now()
+        self.led_pwm_info_pub.publish(LedPwmInfo(header,ok,message,req.pin,req.value))
         self.set_led_pwm(req.pin,req.value)
-        return LedPwmResponse(True,"")
+        return LedPwmResponse(ok,message)
 
     def set_led_pwm(self, pin, value):
         with self.lock:
