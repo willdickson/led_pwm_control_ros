@@ -18,6 +18,7 @@ class LedPwmProxy(object):
             led_pwm_srv_name  = '/led_pwm'.format(self.namespace)
         else:
             led_pwm_srv_name  = '/{}/led_pwm'.format(self.namespace)
+        rospy.wait_for_service(led_pwm_srv_name)
         self.led_pwm_proxy = rospy.ServiceProxy(led_pwm_srv_name,LedPwm)
 
     def set_value(self, pin, value):
